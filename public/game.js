@@ -193,7 +193,7 @@ function showLanding() {
     <div class="screen screen-landing">
       <div class="logo">
         <div class="logo-icon">🎙️</div>
-        <h1>LayniFahmi<span>Game</span></h1>
+        <h1>LaynieFahmi<span>Game</span></h1>
         <p class="tagline">Say it backwards. Guess it forwards. 😂</p>
       </div>
       <div class="card">
