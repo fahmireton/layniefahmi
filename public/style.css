@@ -186,6 +186,8 @@ button:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important;
 
 .btn-ghost:hover:not(:disabled) { border-color: var(--text2); color: var(--text); }
 .btn-small { padding: 7px 12px; font-size: 0.82rem; }
+.btn-leave { display: block; margin: 1.2rem auto 0; opacity: 0.5; }
+.btn-leave:hover { opacity: 1; }
 
 .btn-audio {
   background: rgba(155, 93, 229, 0.15);

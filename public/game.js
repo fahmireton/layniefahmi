@@ -156,6 +156,28 @@ const $id = (id) => document.getElementById(id);
 
 function render(html) { $app().innerHTML = html; }
 
+function leaveBtn() {
+  return `<button class="btn-ghost btn-small btn-leave" id="btn-leave">✕ Leave Game</button>`;
+}
+
+function bindLeave() {
+  const el = $id('btn-leave');
+  if (el) el.onclick = leaveGame;
+}
+
+function leaveGame() {
+  clearInterval(G._guessTimer);
+  if (G.audio && G.audio.stream) G.audio.stream.getTracks().forEach(t => t.stop());
+  if (G.socket) { G.socket.disconnect(); G.socket = null; }
+  G.audio = null;
+  G.role = null;
+  G.round = 1;
+  G.scores = [];
+  G.speakerAudioBuf = null;
+  G.guesserAudioBuf = null;
+  showLanding();
+}
+
 function toast(msg, type = 'info') {
   const c = document.getElementById('toast-container');
   const el = document.createElement('div');
@@ -241,9 +263,11 @@ function showWaiting(roomCode, players) {
       </div>
       <div style="display:flex;justify-content:center"><div class="spinner"></div></div>
       <p class="hint-text" style="text-align:center">Share the room code with your partner to start!</p>
+      ${leaveBtn()}
     </div>
   `);
 
+  bindLeave();
   $id('btn-copy').onclick = () => {
     navigator.clipboard.writeText(roomCode)
       .then(() => toast('Room code copied!', 'success'))
@@ -262,12 +286,14 @@ function showSpeakerSelect(options, round, scores) {
         ${options.map(c => `<button class="btn-celebrity" data-celeb="${esc(c)}">${esc(c)}</button>`).join('')}
       </div>
       ${scoreboardHTML()}
+      ${leaveBtn()}
     </div>
   `);
 
   document.querySelectorAll('.btn-celebrity').forEach(btn => {
     btn.onclick = () => selectCelebrity(btn.dataset.celeb);
   });
+  bindLeave();
 }
 
 function showSpeakerRecord(celebrity) {
@@ -293,9 +319,11 @@ function showSpeakerRecord(celebrity) {
           <button id="btn-rerecord" class="btn-ghost">🔄 Re-record</button>
         </div>
       </div>
+      ${leaveBtn()}
     </div>
   `);
 
+  bindLeave();
   setupRecordButton('speaker', (buf) => {
     if (!buf) { toast('Recording failed — try again', 'error'); return; }
     const reversed = G.audio.reverseBuffer(G.audio.cloneBuffer(buf));
@@ -324,8 +352,10 @@ function showSpeakerWait(guesserName) {
         <div class="pulse-ring"></div>
       </div>
       ${scoreboardHTML()}
+      ${leaveBtn()}
     </div>
   `);
+  bindLeave();
 }
 
 function showGuesserWait(message) {
@@ -340,8 +370,10 @@ function showGuesserWait(message) {
         <div class="spinner"></div>
       </div>
       ${scoreboardHTML()}
+      ${leaveBtn()}
     </div>
   `);
+  bindLeave();
 }
 
 function showGuesserTurn(audioBuffer) {
@@ -388,9 +420,11 @@ function showGuesserTurn(audioBuffer) {
         <button id="btn-submit" class="btn-primary" disabled>Submit Guess 🎯</button>
         <div class="guess-timer"><span id="timer-display">⏱ 60s</span></div>
       </div>
+      ${leaveBtn()}
     </div>
   `);
 
+  bindLeave();
   setupGuesserTurn();
 }
 
@@ -688,7 +722,16 @@ function setupSocket() {
   });
 
   s.on('player_disconnected', ({ playerName }) => {
-    toast(`${playerName} disconnected 😢`, 'error');
+    clearInterval(G._guessTimer);
+    render(`
+      <div class="screen" style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem">
+        <div style="font-size:3rem">😢</div>
+        <h2>${esc(playerName)} left the game</h2>
+        <p class="hint-text">The game has ended.</p>
+        <button id="btn-home" class="btn-primary">← Back to Menu</button>
+      </div>
+    `);
+    $id('btn-home').onclick = leaveGame;
   });
 
   s.on('error', ({ message }) => {

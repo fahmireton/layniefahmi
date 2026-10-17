@@ -267,6 +267,8 @@ io.on('connection', (socket) => {
       player.connected = false;
       socket.to(room.code).emit('player_disconnected', { playerName: player.name });
     }
+    // Clean up room once everyone is gone so the room code is reusable
+    if (room.players.every(p => !p.connected)) rooms.delete(room.code);
   });
 });
 
