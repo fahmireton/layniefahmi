@@ -1,5 +1,5 @@
 {
-  "name": "layniefahmigame",
+  "name": "echoclash",
   "version": "1.0.0",
   "description": "Real-time 2-player voice reversal guessing game",
   "main": "server.js",

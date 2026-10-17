@@ -67,8 +67,8 @@ class AudioManager {
     return clone;
   }
 
-  play(buf, onended) {
-    if (this.ctx.state === 'suspended') this.ctx.resume();
+  async play(buf, onended) {
+    if (this.ctx.state === 'suspended') await this.ctx.resume();
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.connect(this.ctx.destination);
@@ -193,18 +193,18 @@ function showLanding() {
     <div class="screen screen-landing">
       <div class="logo">
         <div class="logo-icon">🎙️</div>
-        <h1>LaynieFahmi<span>Game</span></h1>
+        <h1>Echo<span>Clash</span></h1>
         <p class="tagline">Say it backwards. Guess it forwards. 😂</p>
       </div>
       <div class="card">
         <div class="field">
           <label>Your Name</label>
-          <input id="inp-name" type="text" placeholder="e.g. Laynie" maxlength="20" autocomplete="off" />
+          <input id="inp-name" type="text" placeholder="e.g. Alex" maxlength="20" autocomplete="off" />
         </div>
         <div class="field">
           <label>Room Code <span class="hint">(share with your partner)</span></label>
           <div class="room-code-row">
-            <input id="inp-room" type="text" placeholder="e.g. LAYNIE" maxlength="10" autocomplete="off" />
+            <input id="inp-room" type="text" placeholder="e.g. ECHO" maxlength="10" autocomplete="off" />
             <button id="btn-random" class="btn-ghost btn-small" title="Random code">🎲</button>
           </div>
         </div>
@@ -395,7 +395,7 @@ function showGuesserTurn(audioBuffer) {
 }
 
 function showReveal(result) {
-  const { guess, correct, celebrity, guesserPoints, speakerPoints, speedBonus,
+  const { guess, correct, celebrity, guesserPoints, speakerPoints, timeTaken,
           scores, speakerAudio, guesserAudio, speakerName, guesserName } = result;
 
   G.scores = scores;
@@ -418,11 +418,11 @@ function showReveal(result) {
         ${guesserPoints > 0 ? `
           <div class="points earned">
             <span>🏆 ${esc(guesserName)}</span>
-            <span>+${guesserPoints} pts${speedBonus ? ' ⚡ Speed Bonus!' : ''}</span>
+            <span>+${guesserPoints} pts${timeTaken !== undefined ? ` ⚡ ${timeTaken}s` : ''}</span>
           </div>` : ''}
         ${speakerPoints > 0 ? `
-          <div class="points stumped">
-            <span>🎙️ ${esc(speakerName)} stumped them!</span>
+          <div class="points earned">
+            <span>🎙️ ${esc(speakerName)} (great recording!)</span>
             <span>+${speakerPoints} pts</span>
           </div>` : ''}
         ${guesserPoints === 0 && speakerPoints === 0 ? `
@@ -447,7 +447,7 @@ function showReveal(result) {
     $id('btn-play-spk').onclick = async () => {
       try {
         const buf = await G.audio.base64ToBuffer(speakerAudio);
-        G.audio.play(buf);
+        await G.audio.play(buf);
       } catch { toast('Could not play audio', 'error'); }
     };
   }
@@ -456,7 +456,7 @@ function showReveal(result) {
     $id('btn-play-gsr').onclick = async () => {
       try {
         const buf = await G.audio.base64ToBuffer(guesserAudio);
-        G.audio.play(buf);
+        await G.audio.play(buf);
       } catch { toast('Could not play audio', 'error'); }
     };
   }
@@ -594,7 +594,10 @@ function setupGuesserTurn() {
   btn.onclick = submitGuess;
 
   // 60-second countdown
+  clearInterval(G._guessTimer);
   let timeLeft = 60;
+  const timerEl = $id('timer-display');
+  if (timerEl) timerEl.textContent = '⏱ 60s';
   G._guessTimer = setInterval(() => {
     timeLeft--;
     const el = $id('timer-display');
@@ -700,7 +703,7 @@ async function joinRoom() {
   const roomEl = $id('inp-room');
 
   const name = nameEl.value.trim();
-  const room = (roomEl.value.trim().toUpperCase() || 'LAYNIE').replace(/[^A-Z0-9]/g, '').slice(0, 10) || 'LAYNIE';
+  const room = (roomEl.value.trim().toUpperCase() || 'ECHO').replace(/[^A-Z0-9]/g, '').slice(0, 10) || 'ECHO';
 
   if (!name) { toast('Please enter your name!', 'error'); nameEl.focus(); return; }
 

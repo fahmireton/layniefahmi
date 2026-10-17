@@ -128,7 +128,7 @@ function startRound(io, room) {
 io.on('connection', (socket) => {
 
   socket.on('join_room', ({ roomCode, playerName }) => {
-    const code = (roomCode || 'LAYNIE').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) || 'LAYNIE';
+    const code = (roomCode || 'ECHO').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) || 'ECHO';
     const name = (playerName || 'Player').trim().slice(0, 20);
 
     if (!rooms.has(code)) rooms.set(code, createRoom(code));
@@ -216,14 +216,14 @@ io.on('connection', (socket) => {
 
     const correct = fuzzyMatch(guess || '', room.selectedCelebrity);
     const elapsed = (Date.now() - room.roundStartTime) / 1000;
-    const speedBonus = elapsed < 60 && correct;
 
     let guesserPoints = 0;
     let speakerPoints = 0;
 
     if (correct) {
-      guesserPoints = 100 + (speedBonus ? 20 : 0);
-    } else {
+      // Faster guess = more points: 200 at 0s, scales down to 50 at 60s
+      guesserPoints = Math.max(50, Math.round(200 - (elapsed / 60) * 150));
+      // Speaker gets rewarded only when their recording was clear enough to guess
       speakerPoints = 50;
     }
 
@@ -236,7 +236,7 @@ io.on('connection', (socket) => {
       celebrity: room.selectedCelebrity,
       guesserPoints,
       speakerPoints,
-      speedBonus,
+      timeTaken: Math.round(elapsed),
       scores: room.players.map(p => ({ name: p.name, score: p.score })),
       speakerAudio: room.speakerAudio,
       guesserAudio: room.guesserAudio,
@@ -272,4 +272,4 @@ io.on('connection', (socket) => {
 
 // ── Start ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, () => console.log(`LayniFahmi Game running on port ${PORT}`));
+httpServer.listen(PORT, () => console.log(`EchoClash running on port ${PORT}`));
