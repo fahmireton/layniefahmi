@@ -221,8 +221,8 @@ io.on('connection', (socket) => {
     let speakerPoints = 0;
 
     if (correct) {
-      // Faster guess = more points: 200 at 0s, scales down to 50 at 60s
-      guesserPoints = Math.max(50, Math.round(200 - (elapsed / 60) * 150));
+      // Faster guess = more points: 100 at 0s, scales down to 10 at 60s
+      guesserPoints = Math.max(10, Math.round(100 * (1 - elapsed / 60)));
       // Speaker gets rewarded only when their recording was clear enough to guess
       speakerPoints = 50;
     }
